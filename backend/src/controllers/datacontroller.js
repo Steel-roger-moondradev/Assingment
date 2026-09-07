@@ -2,30 +2,40 @@ import Data from "../models/data.js";
 
 export const getData = async (req, res) => {
   try {
-    const {
-      country,
-      city,
-      topic,
-      sector,
-      region,
-      pestle,
-      source,
-      swot,
-      end_year,
-    } = req.query;
+    const { country, city, topic, sector, region, end_year } = req.query;
+
     const filter = {};
 
-    if (country) filter.country = country;
-    if (city) filter.city = city;
-    if (topic) filter.topic = topic;
-    if (sector) filter.sector = sector;
-    if (region) filter.region = region;
-    if (pestle) filter.pestle = pestle;
-    if (source) filter.source = source;
-    if (swot) filter.swot = swot;
+    if (country) {
+      filter.country = {
+        $regex: country,
+        $options: "i",
+      };
+    }
+
+    if (city) {
+      filter.city = {
+        $regex: city,
+        $options: "i",
+      };
+    }
+
+    if (topic) {
+      filter.topic = topic;
+    }
+
+    if (sector) {
+      filter.sector = sector;
+    }
+
+    if (region) {
+      filter.region = region;
+    }
 
     if (end_year) {
-      filter.end_year = Number(end_year);
+      filter.end_year = {
+        $lte: Number(end_year),
+      };
     }
 
     const data = await Data.find(filter);
