@@ -1,42 +1,74 @@
-const fields = [
-  ["end_year", "End Year", "number"],
-  ["topic", "Topic", "text"],
-  ["sector", "Sector", "text"],
-  ["region", "Region", "text"],
-  ["pestle", "PESTLE", "text"],
-  ["source", "Source", "text"],
-  ["swot", "SWOT", "text"],
-  ["country", "Country", "text"],
-  ["city", "City", "text"],
-];
-
-function FilterPanel({ filters, onChange, onClear }) {
+function FilterPanel() {
   return (
     <section className="filter-panel">
       <div className="filter-header">
-        <div>
-          <h2>Filters</h2>
-          <p>Refine the analysis using available data fields.</p>
-        </div>
-
-        <button className="clear-btn" onClick={onClear}>
-          Clear all
-        </button>
+        <h2>Filters</h2>
+        <button>Reset</button>
       </div>
 
-      <div className="filters-grid">
-        {fields.map(([name, label, type]) => (
-          <div className="filter-group" key={name}>
-            <label htmlFor={name}>{label}</label>
-            <input
-              id={name}
-              type={type}
-              placeholder={`Search ${label.toLowerCase()}...`}
-              value={filters[name]}
-              onChange={(e) => onChange(name, e.target.value)}
-            />
-          </div>
-        ))}
+      <div className="filter-grid">
+        <div className="filter-group">
+          <label>End Year</label>
+          <select>
+            <option value="">All Years</option>
+          </select>
+        </div>
+
+        <div className="filter-group">
+          <label>Topics</label>
+          <select>
+            <option value="">All Topics</option>
+          </select>
+        </div>
+
+        <div className="filter-group">
+          <label>Sector</label>
+          <select>
+            <option value="">All Sectors</option>
+          </select>
+        </div>
+
+        <div className="filter-group">
+          <label>Region</label>
+          <select>
+            <option value="">All Regions</option>
+          </select>
+        </div>
+
+        <div className="filter-group">
+          <label>PEST</label>
+          <select>
+            <option value="">All PEST</option>
+          </select>
+        </div>
+
+        <div className="filter-group">
+          <label>Source</label>
+          <select>
+            <option value="">All Sources</option>
+          </select>
+        </div>
+
+        <div className="filter-group">
+          <label>SWOT</label>
+          <select>
+            <option value="">All SWOT</option>
+          </select>
+        </div>
+
+        <div className="filter-group">
+          <label>Country</label>
+          <select>
+            <option value="">All Countries</option>
+          </select>
+        </div>
+
+        <div className="filter-group">
+          <label>City</label>
+          <select>
+            <option value="">All Cities</option>
+          </select>
+        </div>
       </div>
     </section>
   );

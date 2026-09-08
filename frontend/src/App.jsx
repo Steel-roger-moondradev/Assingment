@@ -1,182 +1,132 @@
-import { useEffect, useState } from "react";
-import axios from "axios";
+import "./index.css";
+import Sidebar from "./components/Sidebar";
+import DashboardHeader from "./components/DashboardHeader";
 import FilterPanel from "./components/FilterPanel";
-import StatCard from "./components/StatCard";
+import SummaryCards from "./components/SummaryCards";
 import IntensityChart from "./components/IntensityChart";
 import LikelihoodChart from "./components/LikelihoodChart";
 import RelevanceChart from "./components/RelevanceChart";
+import YearChart from "./components/YearChart";
 import CountryChart from "./components/CountryChart";
-import "./App.css";
+import TopicChart from "./components/TopicChart";
+import RegionChart from "./components/RegionChart";
+import CityChart from "./components/CityChart";
+import DataTable from "./components/DataTable";
+const sampleIntensityData = [
+  { year: 2018, intensity: 40 },
+  { year: 2019, intensity: 65 },
+  { year: 2020, intensity: 30 },
+  { year: 2021, intensity: 80 },
+  { year: 2022, intensity: 55 },
+];
+const sampleLikelihoodData = [
+  { likelihood: 20 },
+  { likelihood: 35 },
+  { likelihood: 40 },
+  { likelihood: 55 },
+  { likelihood: 60 },
+  { likelihood: 70 },
+  { likelihood: 75 },
+  { likelihood: 80 },
+  { likelihood: 90 },
+  { likelihood: 95 },
+];
 
-const API_URL = import.meta.env.BACKEND_URL;
+const sampleRelevanceData = [
+  { year: 2018, relevance: 30 },
+  { year: 2019, relevance: 50 },
+  { year: 2020, relevance: 25 },
+  { year: 2021, relevance: 70 },
+  { year: 2022, relevance: 45 },
+];
 
+const sampleYearData = [
+  { year: 2018, count: 12 },
+  { year: 2019, count: 25 },
+  { year: 2020, count: 18 },
+  { year: 2021, count: 35 },
+  { year: 2022, count: 28 },
+];
+const sampleCountryData = [
+  { country: "United States", count: 45 },
+  { country: "India", count: 32 },
+  { country: "United Kingdom", count: 25 },
+  { country: "China", count: 18 },
+  { country: "Germany", count: 12 },
+];
+const sampleTopicData = [
+  { topic: "Technology", count: 40 },
+  { topic: "Energy", count: 30 },
+  { topic: "Environment", count: 25 },
+  { topic: "Healthcare", count: 20 },
+  { topic: "Finance", count: 15 },
+];
+const sampleRegionData = [
+  { region: "North America", count: 45 },
+  { region: "Europe", count: 35 },
+  { region: "Asia", count: 30 },
+  { region: "Middle East", count: 20 },
+  { region: "Africa", count: 15 },
+];
+const sampleCityData = [
+  { city: "New York", count: 35 },
+  { city: "London", count: 28 },
+  { city: "Mumbai", count: 22 },
+  { city: "Delhi", count: 18 },
+  { city: "Singapore", count: 12 },
+];
+const sampleTableData = [
+  {
+    id: 1,
+    title: "Renewable energy growth",
+    topic: "Energy",
+    sector: "Energy",
+    region: "Europe",
+    country: "Germany",
+    city: "Berlin",
+    intensity: 70,
+    likelihood: 80,
+    relevance: 90,
+    end_year: 2022,
+  },
+  {
+    id: 2,
+    title: "Technology innovation",
+    topic: "Technology",
+    sector: "Technology",
+    region: "Asia",
+    country: "India",
+    city: "Mumbai",
+    intensity: 60,
+    likelihood: 75,
+    relevance: 85,
+    end_year: 2021,
+  },
+];
 function App() {
-  const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-
-  const [filters, setFilters] = useState({
-    end_year: "",
-    topic: "",
-    sector: "",
-    region: "",
-    pestle: "",
-    source: "",
-    swot: "",
-    country: "",
-    city: "",
-  });
-
-  useEffect(() => {
-    fetchData();
-  }, [filters]);
-
-  async function fetchData() {
-    try {
-      setLoading(true);
-      setError("");
-
-      const params = Object.fromEntries(
-        Object.entries(filters).filter(([, value]) => value !== ""),
-      );
-
-      const response = await axios.get(API_URL, { params });
-
-      setData(response.data.data || response.data);
-    } catch (err) {
-      setError("Failed to load dashboard data.");
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  function updateFilter(name, value) {
-    setFilters((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  }
-
-  function clearFilters() {
-    setFilters({
-      end_year: "",
-      topic: "",
-      sector: "",
-      region: "",
-      pestle: "",
-      source: "",
-      swot: "",
-      country: "",
-      city: "",
-    });
-  }
-
-  const totalRecords = data.length;
-
-  const avgIntensity = data.length
-    ? (
-        data.reduce((sum, item) => sum + Number(item.intensity || 0), 0) /
-        data.length
-      ).toFixed(2)
-    : 0;
-
-  const avgLikelihood = data.length
-    ? (
-        data.reduce((sum, item) => sum + Number(item.likelihood || 0), 0) /
-        data.length
-      ).toFixed(2)
-    : 0;
-
-  const avgRelevance = data.length
-    ? (
-        data.reduce((sum, item) => sum + Number(item.relevance || 0), 0) /
-        data.length
-      ).toFixed(2)
-    : 0;
-
   return (
     <div className="app">
-      <header className="dashboard-header">
-        <div>
-          <p className="eyebrow">BLACKCOFFER · DATA INTELLIGENCE</p>
-          <h1>Insight Analytics Dashboard</h1>
-          <p className="subtitle">
-            Explore intensity, likelihood, relevance, and geographic trends.
-          </p>
-        </div>
+      <Sidebar />
 
-        <button className="reset-btn" onClick={clearFilters}>
-          Reset filters
-        </button>
-      </header>
+      <main className="main-content">
+        <DashboardHeader />
 
-      <FilterPanel
-        filters={filters}
-        onChange={updateFilter}
-        onClear={clearFilters}
-      />
+        <FilterPanel />
 
-      {error && <div className="error-message">{error}</div>}
+        <SummaryCards />
 
-      {loading ? (
-        <div className="loading">Loading dashboard...</div>
-      ) : (
-        <>
-          <section className="stats-grid">
-            <StatCard title="Total Records" value={totalRecords} icon="◈" />
-            <StatCard title="Average Intensity" value={avgIntensity} icon="↗" />
-            <StatCard
-              title="Average Likelihood"
-              value={avgLikelihood}
-              icon="◎"
-            />
-            <StatCard title="Average Relevance" value={avgRelevance} icon="✦" />
-          </section>
+        <IntensityChart data={sampleIntensityData} />
 
-          <section className="charts-grid">
-            <div className="chart-card chart-wide">
-              <div className="chart-heading">
-                <div>
-                  <h2>Intensity by Year</h2>
-                  <p>Average intensity across available years</p>
-                </div>
-              </div>
-              <IntensityChart data={data} />
-            </div>
-
-            <div className="chart-card">
-              <div className="chart-heading">
-                <div>
-                  <h2>Likelihood Distribution</h2>
-                  <p>Average likelihood by year</p>
-                </div>
-              </div>
-              <LikelihoodChart data={data} />
-            </div>
-
-            <div className="chart-card">
-              <div className="chart-heading">
-                <div>
-                  <h2>Relevance by Year</h2>
-                  <p>Average relevance across years</p>
-                </div>
-              </div>
-              <RelevanceChart data={data} />
-            </div>
-
-            <div className="chart-card chart-wide">
-              <div className="chart-heading">
-                <div>
-                  <h2>Top Countries</h2>
-                  <p>Records grouped by country</p>
-                </div>
-              </div>
-              <CountryChart data={data} />
-            </div>
-          </section>
-        </>
-      )}
+        <LikelihoodChart data={sampleLikelihoodData} />
+        <RelevanceChart data={sampleRelevanceData} />
+        <YearChart data={sampleYearData} />
+        <CountryChart data={sampleCountryData} />
+        <TopicChart data={sampleTopicData} />
+        <RegionChart data={sampleRegionData} />
+        <CityChart data={sampleCityData} />
+        <DataTable data={sampleTableData} />
+        <section className="dashboard-content"></section>
+      </main>
     </div>
   );
 }
