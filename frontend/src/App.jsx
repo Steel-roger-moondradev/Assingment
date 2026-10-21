@@ -12,13 +12,28 @@ import TopicChart from "./components/TopicChart";
 import RegionChart from "./components/RegionChart";
 import CityChart from "./components/CityChart";
 import DataTable from "./components/DataTable";
-const sampleIntensityData = [
-  { year: 2018, intensity: 40 },
-  { year: 2019, intensity: 65 },
-  { year: 2020, intensity: 30 },
-  { year: 2021, intensity: 80 },
-  { year: 2022, intensity: 55 },
-];
+import { useEffect, useMemo, useState } from "react";
+import { fetchRecords } from "./services/api.jsx";
+
+async function loadRecords() {
+  try {
+    setLoading(true);
+    setError("");
+
+    const result = await fetchRecords(filters);
+
+    const receivedRecords = Array.isArray(result)
+      ? result
+      : result.records || result.data || [];
+
+    setRecords(receivedRecords);
+  } catch (error) {
+    setError(error.message || "Unable to load records");
+  } finally {
+    setLoading(false);
+  }
+}
+
 const sampleLikelihoodData = [
   { likelihood: 20 },
   { likelihood: 35 },
@@ -75,56 +90,100 @@ const sampleCityData = [
   { city: "Delhi", count: 18 },
   { city: "Singapore", count: 12 },
 ];
-const sampleTableData = [
-  {
-    id: 1,
-    title: "Renewable energy growth",
-    topic: "Energy",
-    sector: "Energy",
-    region: "Europe",
-    country: "Germany",
-    city: "Berlin",
-    intensity: 70,
-    likelihood: 80,
-    relevance: 90,
-    end_year: 2022,
-  },
-  {
-    id: 2,
-    title: "Technology innovation",
-    topic: "Technology",
-    sector: "Technology",
-    region: "Asia",
-    country: "India",
-    city: "Mumbai",
-    intensity: 60,
-    likelihood: 75,
-    relevance: 85,
-    end_year: 2021,
-  },
-];
+
 function App() {
+  const [records, setRecords] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [filters, setFilters] = useState({
+    end_year: "",
+    topic: "",
+    sector: "",
+    region: "",
+    pestle: "",
+    source: "",
+    swot: "",
+    country: "",
+    city: "",
+  });
+  useEffect(() => {
+    loadRecords();
+  }, [filters]);
+
+  useEffect(() => {
+    async function loadRecords() {
+      try {
+        setLoading(true);
+        setError("");
+
+        const result = await fetchRecords(filters);
+
+        // Supports either a direct array or an object containing records/data
+        const receivedRecords = Array.isArray(result)
+          ? result
+          : result.records || result.data || [];
+
+        setRecords(receivedRecords);
+      } catch (err) {
+        setError(err.message || "Unable to load records");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadRecords();
+  }, [filters]);
+
+  const intensityData = useMemo(() => {
+    const grouped = {};
+
+    records.forEach((record) => {
+      const year = record.end_year;
+
+      if (!year || record.intensity === undefined) return;
+
+      if (!grouped[year]) {
+        grouped[year] = {
+          year,
+          total: 0,
+          count: 0,
+        };
+      }
+
+      grouped[year].total += Number(record.intensity) || 0;
+      grouped[year].count += 1;
+    });
+
+    return Object.values(grouped).map((item) => ({
+      year: item.year,
+      intensity: item.count ? item.total / item.count : 0,
+    }));
+  }, [records]);
+
   return (
     <div className="app">
+      {loading && <p className="status-message">Loading records...</p>}
+
+      {error && <p className="error-message">{error}</p>}
       <Sidebar />
 
       <main className="main-content">
-        <DashboardHeader />
-
-        <FilterPanel />
-
-        <SummaryCards />
-
-        <IntensityChart data={sampleIntensityData} />
-
-        <LikelihoodChart data={sampleLikelihoodData} />
-        <RelevanceChart data={sampleRelevanceData} />
-        <YearChart data={sampleYearData} />
-        <CountryChart data={sampleCountryData} />
-        <TopicChart data={sampleTopicData} />
-        <RegionChart data={sampleRegionData} />
-        <CityChart data={sampleCityData} />
-        <DataTable data={sampleTableData} />
+        <DashboardHeader onRefresh={loadRecords} loading={loading} />
+        <FilterPanel
+          filters={filters}
+          setFilters={setFilters}
+          records={records}
+        />
+        <SummaryCards data={records} />
+        <IntensityChart data={intensityData} />
+        <LikelihoodChart data={records} />
+        <RelevanceChart data={records} />
+        <YearChart data={records} />
+        <CountryChart data={records} />
+        <TopicChart data={records} />
+        <RegionChart data={records} />
+        <CityChart data={records} />
+        <DataTable data={records} />
         <section className="dashboard-content"></section>
       </main>
     </div>

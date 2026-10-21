@@ -1,24 +1,45 @@
-function SummaryCards() {
+import { useMemo } from "react";
+
+function SummaryCards({ data = [] }) {
+  const summary = useMemo(() => {
+    const getAverage = (field) => {
+      const values = data
+        .map((record) => Number(record[field]))
+        .filter((value) => Number.isFinite(value));
+
+      if (!values.length) return 0;
+
+      return values.reduce((sum, value) => sum + value, 0) / values.length;
+    };
+
+    return {
+      totalRecords: data.length,
+      averageIntensity: getAverage("intensity"),
+      averageLikelihood: getAverage("likelihood"),
+      averageRelevance: getAverage("relevance"),
+    };
+  }, [data]);
+
   const cards = [
     {
       title: "Total Records",
-      value: "—",
-      description: "Records in current dataset",
+      value: summary.totalRecords,
+      description: "Records matching filters",
     },
     {
       title: "Average Intensity",
-      value: "—",
-      description: "Across all records",
+      value: summary.averageIntensity.toFixed(2),
+      description: "Across filtered records",
     },
     {
       title: "Average Likelihood",
-      value: "—",
-      description: "Across all records",
+      value: summary.averageLikelihood.toFixed(2),
+      description: "Across filtered records",
     },
     {
       title: "Average Relevance",
-      value: "—",
-      description: "Across all records",
+      value: summary.averageRelevance.toFixed(2),
+      description: "Across filtered records",
     },
   ];
 
@@ -26,9 +47,9 @@ function SummaryCards() {
     <section className="summary-cards">
       {cards.map((card) => (
         <div className="summary-card" key={card.title}>
-          <p className="summary-card-title">{card.title}</p>
-          <h3 className="summary-card-value">{card.value}</h3>
-          <p className="summary-card-description">{card.description}</p>
+          <h3>{card.title}</h3>
+          <p className="summary-value">{card.value}</p>
+          <p className="summary-description">{card.description}</p>
         </div>
       ))}
     </section>

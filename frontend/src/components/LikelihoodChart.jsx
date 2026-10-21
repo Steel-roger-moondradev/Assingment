@@ -5,10 +5,10 @@ function LikelihoodChart({ data }) {
   const svgRef = useRef(null);
 
   useEffect(() => {
-    if (!data.length) return;
-
     const svg = d3.select(svgRef.current);
     svg.selectAll("*").remove();
+
+    if (!data || data.length === 0) return;
 
     const width = 700;
     const height = 350;
@@ -20,56 +20,77 @@ function LikelihoodChart({ data }) {
       left: 50,
     };
 
-    svg.attr("width", width).attr("height", height);
+    svg
+      .attr("viewBox", `0 0 ${width} ${height}`)
+      .attr("width", "100%")
+      .attr("height", height);
 
-    // X-axis: likelihood values
+    const likelihoodValues = data
+      .map((item) => Number(item.likelihood))
+      .filter((value) => Number.isFinite(value));
+
+    if (likelihoodValues.length === 0) return;
+
     const x = d3
       .scaleLinear()
-      .domain([0, d3.max(data, (d) => d.likelihood)])
+      .domain([0, d3.max(likelihoodValues)])
       .nice()
       .range([margin.left, width - margin.right]);
 
-    // Create histogram bins
-    const bins = d3.bin().domain(x.domain()).thresholds(10)(
-      data.map((d) => d.likelihood),
-    );
+    const bins = d3.bin().domain(x.domain()).thresholds(10)(likelihoodValues);
 
-    // Y-axis: number of records
     const y = d3
       .scaleLinear()
-      .domain([0, d3.max(bins, (d) => d.length)])
+      .domain([0, d3.max(bins, (bin) => bin.length)])
       .nice()
       .range([height - margin.bottom, margin.top]);
 
-    // Draw X-axis
     svg
       .append("g")
       .attr("transform", `translate(0, ${height - margin.bottom})`)
       .call(d3.axisBottom(x));
 
-    // Draw Y-axis
     svg
       .append("g")
       .attr("transform", `translate(${margin.left}, 0)`)
       .call(d3.axisLeft(y));
 
-    // Draw histogram bars
+    svg
+      .append("text")
+      .attr("x", width / 2)
+      .attr("y", height - 10)
+      .attr("text-anchor", "middle")
+      .text("Likelihood");
+
+    svg
+      .append("text")
+      .attr("transform", "rotate(-90)")
+      .attr("x", -height / 2)
+      .attr("y", 15)
+      .attr("text-anchor", "middle")
+      .text("Number of Records");
+
     svg
       .selectAll(".bar")
       .data(bins)
       .join("rect")
       .attr("class", "bar")
-      .attr("x", (d) => x(d.x0) + 1)
-      .attr("y", (d) => y(d.length))
-      .attr("width", (d) => Math.max(0, x(d.x1) - x(d.x0) - 2))
-      .attr("height", (d) => y(0) - y(d.length))
+      .attr("x", (bin) => x(bin.x0) + 1)
+      .attr("y", (bin) => y(bin.length))
+      .attr("width", (bin) => Math.max(0, x(bin.x1) - x(bin.x0) - 2))
+      .attr("height", (bin) => y(0) - y(bin.length))
       .attr("fill", "#16a34a");
   }, [data]);
 
   return (
     <section className="chart-card">
       <h2>Likelihood Distribution</h2>
-      <svg ref={svgRef}></svg>
+
+      {!data || data.length === 0 ? (
+        <p>No likelihood data available.</p>
+      ) : (
+        <svg ref={svgRef}></svg>
+      )}
     </section>
   );
 }

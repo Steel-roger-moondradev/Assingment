@@ -5,10 +5,29 @@ function YearChart({ data }) {
   const svgRef = useRef(null);
 
   useEffect(() => {
-    if (!data.length) return;
-
     const svg = d3.select(svgRef.current);
     svg.selectAll("*").remove();
+
+    if (!data || data.length === 0) return;
+
+    const validYears = data
+      .map((item) => Number(item.end_year))
+      .filter((year) => Number.isFinite(year));
+
+    if (validYears.length === 0) return;
+
+    const yearCounts = d3.rollups(
+      validYears,
+      (values) => values.length,
+      (year) => year,
+    );
+
+    const chartData = yearCounts
+      .map(([year, count]) => ({
+        year,
+        count,
+      }))
+      .sort((a, b) => a.year - b.year);
 
     const width = 700;
     const height = 350;
@@ -20,64 +39,81 @@ function YearChart({ data }) {
       left: 50,
     };
 
-    svg.attr("width", width).attr("height", height);
+    svg
+      .attr("viewBox", `0 0 ${width} ${height}`)
+      .attr("width", "100%")
+      .attr("height", height);
 
-    // X-axis: years
     const x = d3
       .scalePoint()
-      .domain(data.map((d) => d.year))
-      .range([margin.left, width - margin.right]);
+      .domain(chartData.map((item) => item.year))
+      .range([margin.left, width - margin.right])
+      .padding(0.5);
 
-    // Y-axis: record count
     const y = d3
       .scaleLinear()
-      .domain([0, d3.max(data, (d) => d.count)])
+      .domain([0, d3.max(chartData, (item) => item.count)])
       .nice()
       .range([height - margin.bottom, margin.top]);
 
-    // Draw X-axis
     svg
       .append("g")
       .attr("transform", `translate(0, ${height - margin.bottom})`)
       .call(d3.axisBottom(x));
 
-    // Draw Y-axis
     svg
       .append("g")
       .attr("transform", `translate(${margin.left}, 0)`)
       .call(d3.axisLeft(y));
 
-    // Create line generator
     const line = d3
       .line()
-      .x((d) => x(d.year))
-      .y((d) => y(d.count));
+      .x((item) => x(item.year))
+      .y((item) => y(item.count));
 
-    // Draw line
     svg
       .append("path")
-      .datum(data)
+      .datum(chartData)
       .attr("fill", "none")
       .attr("stroke", "#2563eb")
-      .attr("stroke-width", 2)
+      .attr("stroke-width", 3)
       .attr("d", line);
 
-    // Draw points
     svg
       .selectAll(".point")
-      .data(data)
+      .data(chartData)
       .join("circle")
       .attr("class", "point")
-      .attr("cx", (d) => x(d.year))
-      .attr("cy", (d) => y(d.count))
-      .attr("r", 4)
+      .attr("cx", (item) => x(item.year))
+      .attr("cy", (item) => y(item.count))
+      .attr("r", 5)
       .attr("fill", "#2563eb");
+
+    svg
+      .append("text")
+      .attr("x", width / 2)
+      .attr("y", height - 10)
+      .attr("text-anchor", "middle")
+      .text("Year");
+
+    svg
+      .append("text")
+      .attr("transform", "rotate(-90)")
+      .attr("x", -height / 2)
+      .attr("y", 15)
+      .attr("text-anchor", "middle")
+      .text("Number of Records");
   }, [data]);
 
   return (
     <section className="chart-card">
       <h2>Records by Year</h2>
-      <svg ref={svgRef}></svg>
+
+      {!data || data.length === 0 ? (
+        <p>No year data available.</p>
+      ) : (
+        <svg ref={svgRef}></svg>
+      )}
     </section>
   );
 }

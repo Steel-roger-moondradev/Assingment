@@ -5,10 +5,10 @@ function RelevanceChart({ data }) {
   const svgRef = useRef(null);
 
   useEffect(() => {
-    if (!data.length) return;
-
     const svg = d3.select(svgRef.current);
     svg.selectAll("*").remove();
+
+    if (!data || data.length === 0) return;
 
     const width = 700;
     const height = 350;
@@ -20,51 +20,91 @@ function RelevanceChart({ data }) {
       left: 50,
     };
 
-    svg.attr("width", width).attr("height", height);
+    const validData = data
+      .map((item) => ({
+        year: item.end_year,
+        relevance: Number(item.relevance),
+      }))
+      .filter((item) => item.year && Number.isFinite(item.relevance));
 
-    // X-axis: years
+    if (validData.length === 0) return;
+
+    const groupedData = d3.rollups(
+      validData,
+      (values) => d3.mean(values, (item) => item.relevance),
+      (item) => item.year,
+    );
+
+    const chartData = groupedData
+      .map(([year, relevance]) => ({
+        year,
+        relevance,
+      }))
+      .sort((a, b) => a.year - b.year);
+
     const x = d3
       .scaleBand()
-      .domain(data.map((d) => d.year))
+      .domain(chartData.map((item) => item.year))
       .range([margin.left, width - margin.right])
       .padding(0.2);
 
-    // Y-axis: relevance values
     const y = d3
       .scaleLinear()
-      .domain([0, d3.max(data, (d) => d.relevance)])
+      .domain([0, d3.max(chartData, (item) => item.relevance)])
       .nice()
       .range([height - margin.bottom, margin.top]);
 
-    // Draw X-axis
+    svg
+      .attr("viewBox", `0 0 ${width} ${height}`)
+      .attr("width", "100%")
+      .attr("height", height);
+
     svg
       .append("g")
       .attr("transform", `translate(0, ${height - margin.bottom})`)
       .call(d3.axisBottom(x));
 
-    // Draw Y-axis
     svg
       .append("g")
       .attr("transform", `translate(${margin.left}, 0)`)
       .call(d3.axisLeft(y));
 
-    // Draw bars
+    svg
+      .append("text")
+      .attr("x", width / 2)
+      .attr("y", height - 10)
+      .attr("text-anchor", "middle")
+      .text("Year");
+
+    svg
+      .append("text")
+      .attr("transform", "rotate(-90)")
+      .attr("x", -height / 2)
+      .attr("y", 15)
+      .attr("text-anchor", "middle")
+      .text("Average Relevance");
+
     svg
       .selectAll(".bar")
-      .data(data)
+      .data(chartData)
       .join("rect")
       .attr("class", "bar")
-      .attr("x", (d) => x(d.year))
-      .attr("y", (d) => y(d.relevance))
+      .attr("x", (item) => x(item.year))
+      .attr("y", (item) => y(item.relevance))
       .attr("width", x.bandwidth())
-      .attr("height", (d) => y(0) - y(d.relevance))
+      .attr("height", (item) => y(0) - y(item.relevance))
       .attr("fill", "#9333ea");
   }, [data]);
 
   return (
     <section className="chart-card">
-      <h2>Relevance by Year</h2>
-      <svg ref={svgRef}></svg>
+      <h2>Average Relevance by Year</h2>
+
+      {!data || data.length === 0 ? (
+        <p>No relevance data available.</p>
+      ) : (
+        <svg ref={svgRef}></svg>
+      )}
     </section>
   );
 }

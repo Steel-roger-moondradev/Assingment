@@ -9,11 +9,11 @@ export async function fetchRecords(filters = {}) {
     }
   });
 
-  const response = await fetch(`${API_URL}/api/data?${queryParams.toString()}`);
+  const response = await fetch(`${API_URL}?${queryParams.toString()}`);
 
   if (!response.ok) {
     throw new Error("Failed to fetch records");
   }
-
+  console.log("Response:", response);
   return response.json();
 }

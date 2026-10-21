@@ -1,4 +1,4 @@
-function DashboardHeader() {
+function DashboardHeader({ onRefresh, loading }) {
   return (
     <header className="dashboard-header">
       <div>
@@ -6,7 +6,9 @@ function DashboardHeader() {
         <p>Explore insights from the provided data.</p>
       </div>
 
-      <button>Refresh</button>
+      <button type="button" onClick={onRefresh} disabled={loading}>
+        {loading ? "Loading..." : "Refresh"}
+      </button>
     </header>
   );
 }
